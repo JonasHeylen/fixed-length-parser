@@ -32,7 +32,7 @@ object StreamParser {
               Pull.output(Chunk(Field(currentField.name, fieldValue))) >>
                 go(Stream.chunk(Chunk(remainderOfChunk)) ++ tl, "", fields.tail)
             }
-          case None => Pull.output(Chunk(Field(currentField.name, currentFieldAcc))) >> Pull.done
+          case None => Pull.output(Chunk(Field(currentField.name, currentFieldAcc))) >> go(Stream.empty, "", fields.tail)
         }
       }
     in => go(in, "", definition.fields).stream
