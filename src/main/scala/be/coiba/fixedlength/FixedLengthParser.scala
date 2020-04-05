@@ -3,6 +3,7 @@ package be.coiba.fixedlength
 import cats.effect._
 import cats.implicits._
 
+
 object FixedLengthParser extends IOApp {
 
   import Console._
@@ -18,10 +19,11 @@ object FixedLengthParser extends IOApp {
   val ColumnSpacing = 2
   val Width = 22
 
-  def run(args: List[String]): IO[ExitCode] =
+  def run(args: List[String]): IO[ExitCode] = {
     testRecord.fields
       .traverse(printField(_, testRecord.maxFieldNameLength + ColumnSpacing, Width))
       .as(ExitCode.Success)
+  }
 
   def printField(
       field: Field,
