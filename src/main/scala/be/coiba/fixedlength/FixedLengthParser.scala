@@ -2,28 +2,29 @@ package be.coiba.fixedlength
 
 import cats.effect._
 import cats.implicits._
-
+import fs2._
+import java.nio.file.Paths
+import java.nio.file.Path
 
 object FixedLengthParser extends IOApp {
 
   import Console._
 
-  val testRecord = Record(
-    List(
-      Field("foo", "01234567890123456789012345"),
-      Field("bar", "short field"),
-      Field("optional", "")
-    )
-  )
-
-  val ColumnSpacing = 2
+  val Spacing = 2
   val Width = 22
 
-  def run(args: List[String]): IO[ExitCode] = {
-    testRecord.fields
-      .traverse(printField(_, testRecord.maxFieldNameLength + ColumnSpacing, Width))
-      .as(ExitCode.Success)
-  }
+  def run(args: List[String]): IO[ExitCode] =
+    args match {
+      case List(definitionPath, recordPath) =>
+        for {
+          recordDefinition <- RecordDefinition.fromPath(Paths.get(definitionPath))
+          recordFileStream = FileIO.readFile(Paths.get(recordPath))
+          record <- StreamParser.parseRecord(recordFileStream, recordDefinition)
+          _ <- record.fields.traverse(printField(_, record.maxFieldNameLength + Spacing, Width))
+        } yield ExitCode.Success
+      case _ =>
+        putStrLn("Usage: FixedLengthParser [recordDefinitionFile] [recordFile]").as(ExitCode.Error)
+    }
 
   def printField(
       field: Field,
@@ -38,4 +39,5 @@ object FixedLengthParser extends IOApp {
        else
          IO.unit)
   }
+
 }
