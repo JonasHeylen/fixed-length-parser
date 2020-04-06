@@ -11,6 +11,7 @@ object StreamParser {
           val (stringWithLength, rest) = (acc + in).splitAt(fieldDef.length)
           (fieldDefs, rest) -> Some(Field(fieldDef.name, stringWithLength))
         case ((Nil, _), _) => (Nil, "") -> None
+        case ((fieldDefs, acc), in) => (fieldDefs, acc + in) -> None
       }
       .map(_._2)
       .unNone
