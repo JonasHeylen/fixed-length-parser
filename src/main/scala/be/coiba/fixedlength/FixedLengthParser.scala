@@ -11,7 +11,7 @@ object FixedLengthParser extends IOApp {
   import Console._
 
   val Spacing = 2
-  val Width = 22
+  val Width = 160
 
   def run(args: List[String]): IO[ExitCode] =
     args match {
@@ -33,7 +33,7 @@ object FixedLengthParser extends IOApp {
   ): IO[Unit] = {
     val (firstLine, remainder) = field.value.splitAt(valueWidth)
     blue *> printPadded(field.name, nameWidth) *> reset *>
-      printPadded(firstLine, valueWidth) *> newLine *>
+      printPadded(firstLine.replace("\n", "\n".padTo(nameWidth + 1, ' ')), valueWidth) *> newLine *>
       (if (remainder.nonEmpty)
          printField(Field("", remainder), nameWidth, valueWidth)
        else
