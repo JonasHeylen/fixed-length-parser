@@ -1,39 +1,21 @@
 package be.coiba.fixedlength
 
-import cats.effect._
-import cats.implicits._
+import cats.effect.Sync
+import cats.syntax.functor._
 import fs2._
 
 object StreamParser {
   def parseRecord[F[_]: Sync](s: Stream[F, String], definition: RecordDefinition): F[Record] =
-    s.through(parseFields(definition))
+    s.mapAccumulate(definition.fields -> "") {
+        case ((fieldDef :: fieldDefs, acc), in) if fieldDef.length <= acc.length + in.length =>
+          val (stringWithLength, rest) = (acc + in).splitAt(fieldDef.length)
+          (fieldDefs, rest) -> Some(Field(fieldDef.name, stringWithLength))
+        case ((Nil, _), _) => (Nil, "") -> None
+      }
+      .map(_._2)
+      .unNone
       .compile
       .toList
-      .map(Record(_))
+      .map(Record)
 
-  def parseFields[F[_]](definition: RecordDefinition): Pipe[F, String, Field] = {
-    def go(
-        in: Stream[F, String],
-        currentFieldAcc: String,
-        fields: List[FieldDefinition]
-    ): Pull[F, Field, Unit] =
-      if (fields.isEmpty)
-        Pull.done
-      else {
-        val currentField = fields.head
-        in.pull.uncons1.flatMap {
-          case Some((hd, tl)) =>
-            val newAcc = currentFieldAcc + hd
-            if (newAcc.length < currentField.length)
-              go(tl, newAcc, fields)
-            else {
-              val (fieldValue, remainderOfChunk) = newAcc.splitAt(currentField.length)
-              Pull.output(Chunk(Field(currentField.name, fieldValue))) >>
-                go(Stream.chunk(Chunk(remainderOfChunk)) ++ tl, "", fields.tail)
-            }
-          case None => Pull.output(Chunk(Field(currentField.name, currentFieldAcc))) >> go(Stream.empty, "", fields.tail)
-        }
-      }
-    in => go(in, "", definition.fields).stream
-  }
 }
