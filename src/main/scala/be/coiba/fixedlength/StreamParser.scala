@@ -21,10 +21,9 @@ object StreamParser {
         Pull.done
       else {
         val currentField = fields.head
-        in.pull.uncons.flatMap {
+        in.pull.uncons1.flatMap {
           case Some((hd, tl)) =>
-            val chunkAsString = hd.combineAll
-            val newAcc = currentFieldAcc + chunkAsString
+            val newAcc = currentFieldAcc + hd
             if (newAcc.length < currentField.length)
               go(tl, newAcc, fields)
             else {
