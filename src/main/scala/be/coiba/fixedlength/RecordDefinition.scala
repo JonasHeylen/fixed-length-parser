@@ -8,7 +8,9 @@ import java.nio.file.{Path, Paths}
 
 final case class FieldDefinition(name: String, length: Int)
 
-final case class RecordDefinition(fields: List[FieldDefinition])
+final case class RecordDefinition(fields: List[FieldDefinition]) {
+  def length: Int = fields.map(_.length).sum
+}
 
 object RecordDefinition {
   def fromPath[F[_]: ContextShift: Functor: Sync](path: Path): F[RecordDefinition] =

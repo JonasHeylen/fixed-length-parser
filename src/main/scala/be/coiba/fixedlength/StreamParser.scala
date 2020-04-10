@@ -6,7 +6,8 @@ import fs2._
 
 object StreamParser {
   def parseRecord[F[_]: Sync](s: Stream[F, String], definition: RecordDefinition): F[Record] =
-    s.flatMap(str => Stream.emits(str.toCharArray()))
+    (s.flatMap(str => Stream.emits(str.toCharArray())) ++ Stream.constant(' '))
+      .take(definition.length)
       .mapAccumulate(definition.fields -> "") {
         case ((fieldDef :: fieldDefs, acc), in) if fieldDef.length <= acc.length + 1 =>
           val (stringWithLength, rest) = (acc + in).splitAt(fieldDef.length)
@@ -18,12 +19,5 @@ object StreamParser {
       .unNone
       .compile
       .toList
-      .map { parsedFields =>
-        parsedFields ++ definition.fields
-          .drop(parsedFields.size)
-          .map(fieldDef => Field(fieldDef.name, ""))
-      }
       .map(Record)
-
-  final case class ParserState(fieldDefs: List[FieldDefinition], rest: String, fields: List[Field])
 }

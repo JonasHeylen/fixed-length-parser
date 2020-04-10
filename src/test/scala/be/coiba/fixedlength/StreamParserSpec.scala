@@ -35,8 +35,8 @@ class StreamParserSpec extends FlatSpec with Matchers {
     StreamParser.parseRecord[IO](input, definition).unsafeRunSync() shouldBe Record(
       List(
         Field("A", "ab"),
-        Field("B", ""),
-        Field("C", "")
+        Field("B", "   "),
+        Field("C", " ")
       )
     )
   }
@@ -46,8 +46,8 @@ class StreamParserSpec extends FlatSpec with Matchers {
     StreamParser.parseRecord[IO](input, definition).unsafeRunSync() shouldBe Record(
       List(
         Field("A", "ab"),
-        Field("B", "c"),
-        Field("C", "")
+        Field("B", "c  "),
+        Field("C", " ")
       )
     )
   }
